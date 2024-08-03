@@ -4,7 +4,7 @@ import PageContainer from '@/components/layout/page-container';
 
 const breadcrumbItems = [
   { title: 'Dashboard', link: '/dashboard' },
-  { title: 'Profile', link: '/dashboard/profile' }
+  { title: 'Product', link: '/dashboard/product' }
 ];
 export default function page() {
   return (

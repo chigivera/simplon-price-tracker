@@ -18,54 +18,26 @@ import {
 } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
 import { Heading } from '@/components/ui/heading';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+
 // import FileUpload from "@/components/FileUpload";
 import { useToast } from '../ui/use-toast';
-import FileUpload from '../file-upload';
-const ImgSchema = z.object({
-  fileName: z.string(),
-  name: z.string(),
-  fileSize: z.number(),
-  size: z.number(),
-  fileKey: z.string(),
-  key: z.string(),
-  fileUrl: z.string(),
-  url: z.string()
-});
-export const IMG_MAX_LIMIT = 3;
+import { AlertModal } from '../modal/alert-modal';
+import { PrismaClient } from '@prisma/client';
+import { scrapeProductDetails } from '@/lib/actions';
+
 const formSchema = z.object({
-  name: z
+  url: z
     .string()
-    .min(3, { message: 'Product Name must be at least 3 characters' }),
-  imgUrl: z
-    .array(ImgSchema)
-    .max(IMG_MAX_LIMIT, { message: 'You can only add up to 3 images' })
-    .min(1, { message: 'At least one image must be added.' }),
-  description: z
-    .string()
-    .min(3, { message: 'Product description must be at least 3 characters' }),
-  price: z.coerce.number(),
-  category: z.string().min(1, { message: 'Please select a category' })
+    .min(3, { message: 'Product Name must be at least 3 characters' })
 });
 
 type ProductFormValues = z.infer<typeof formSchema>;
 
 interface ProductFormProps {
   initialData: any | null;
-  categories: any;
 }
 
-export const ProductForm: React.FC<ProductFormProps> = ({
-  initialData,
-  categories
-}) => {
+export const ProductForm: React.FC<ProductFormProps> = ({ initialData }) => {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
@@ -76,15 +48,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const description = initialData ? 'Edit a product.' : 'Add a new product';
   const toastMessage = initialData ? 'Product updated.' : 'Product created.';
   const action = initialData ? 'Save changes' : 'Create';
+  const prisma = new PrismaClient();
 
   const defaultValues = initialData
     ? initialData
     : {
-        name: '',
-        description: '',
-        price: 0,
-        imgUrl: [],
-        category: ''
+        name: 'url'
       };
 
   const form = useForm<ProductFormValues>({
@@ -95,20 +64,53 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const onSubmit = async (data: ProductFormValues) => {
     try {
       setLoading(true);
+      console.log(data.url);
+      let productData;
+
       if (initialData) {
-        // await axios.post(`/api/products/edit-product/${initialData._id}`, data);
+        // Assuming you want to update an existing product
+        const scrapedData = await scrapeProductDetails(data.url);
+        productData = {
+          ...initialData,
+          url: data.url,
+          currentPrice: scrapedData.currentPrice,
+          lowestPrice: scrapedData.lowestPrice, // You'll need to implement logic to determine this
+          percentDrop: scrapedData.percentDrop
+        };
       } else {
-        // const res = await axios.post(`/api/products/create-product`, data);
-        // console.log("product", res);
+        // For creating a new product, you would typically not scrape data here
+        // Instead, you would directly use the form data
+        const scrapedData = await scrapeProductDetails(data.url);
+        productData = {
+          ...initialData,
+          url: data.url,
+          currentPrice: scrapedData.currentPrice,
+          lowestPrice: scrapedData.lowestPrice, // You'll need to implement logic to determine this
+          percentDrop: scrapedData.percentDrop
+        };
       }
+
+      const response = await fetch('/api/product', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(productData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create product');
+      }
+
       router.refresh();
-      router.push(`/dashboard/products`);
+      router.push(`/dashboard/product`);
       toast({
-        variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
-        description: 'There was a problem with your request.'
+        variant: 'default',
+        title: 'product Saved',
+        description: 'Product Saved Successfully'
       });
     } catch (error: any) {
+      console.log(error);
       toast({
         variant: 'destructive',
         title: 'Uh oh! Something went wrong.',
@@ -132,16 +134,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     }
   };
 
-  const triggerImgUrlValidation = () => form.trigger('imgUrl');
-
   return (
     <>
-      {/* <AlertModal
+      <AlertModal
         isOpen={open}
         onClose={() => setOpen(false)}
         onConfirm={onDelete}
         loading={loading}
-      /> */}
+      />
       <div className="flex items-center justify-between">
         <Heading title={title} description={description} />
         {initialData && (
@@ -161,27 +161,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           onSubmit={form.handleSubmit(onSubmit)}
           className="w-full space-y-8"
         >
-          <FormField
-            control={form.control}
-            name="imgUrl"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Images</FormLabel>
-                <FormControl>
-                  <FileUpload
-                    onChange={field.onChange}
-                    value={field.value}
-                    onRemove={field.onChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div className="gap-8 md:grid md:grid-cols-3">
+          <div className="gap-8 md:grid">
             <FormField
               control={form.control}
-              name="name"
+              name="url"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Name</FormLabel>
@@ -192,69 +175,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Input
-                      disabled={loading}
-                      placeholder="Product description"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Price</FormLabel>
-                  <FormControl>
-                    <Input type="number" disabled={loading} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select
-                    disabled={loading}
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue
-                          defaultValue={field.value}
-                          placeholder="Select a category"
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {/* @ts-ignore  */}
-                      {categories.map((category) => (
-                        <SelectItem key={category._id} value={category._id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

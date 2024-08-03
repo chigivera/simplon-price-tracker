@@ -1,10 +1,10 @@
 {
-  "name": "nextshcdndashboardstarter",
+  "name": "price-tracker",
   "version": "0.1.0",
   "private": true,
   "author": {
-    "name": "Kiran",
-    "url": "https://github.com/Kiranism"
+    "name": "chigivera",
+    "url": "https://github.com/chigivera"
   },
   "scripts": {
     "dev": "next dev",
@@ -25,6 +25,7 @@
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^3.3.2",
+    "@prisma/client": "^5.17.0",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-alert-dialog": "^1.0.5",
     "@radix-ui/react-avatar": "^1.0.4",
@@ -50,6 +51,8 @@
     "@types/react-dom": "18.2.7",
     "@uploadthing/react": "^5.7.0",
     "autoprefixer": "10.4.15",
+    "axios": "^1.7.3",
+    "cheerio": "^1.0.0-rc.12",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "date-fns": "^2.30.0",
@@ -82,6 +85,7 @@
     "husky": "^9.0.11",
     "lint-staged": "^15.2.7",
     "prettier": "3.0.3",
-    "prettier-plugin-tailwindcss": "^0.5.14"
+    "prettier-plugin-tailwindcss": "^0.5.14",
+    "prisma": "^5.17.0"
   }
 }

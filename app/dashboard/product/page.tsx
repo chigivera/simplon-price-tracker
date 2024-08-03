@@ -1,18 +1,17 @@
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { ProductForm } from '@/components/forms/product-form';
 import PageContainer from '@/components/layout/page-container';
-import { UserClient } from '@/components/tables/user-tables/client';
-import { users } from '@/constants/data';
 
 const breadcrumbItems = [
   { title: 'Dashboard', link: '/dashboard' },
-  { title: 'User', link: '/dashboard/user' }
+  { title: 'Profile', link: '/dashboard/profile' }
 ];
 export default function page() {
   return (
-    <PageContainer>
-      <div className="space-y-2">
+    <PageContainer scrollable={true}>
+      <div className="space-y-4">
         <Breadcrumbs items={breadcrumbItems} />
-        <UserClient data={users} />
+        <ProductForm categories={[]} initialData={null} />
       </div>
     </PageContainer>
   );

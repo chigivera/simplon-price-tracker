@@ -11,7 +11,7 @@ export default function page() {
     <PageContainer scrollable={true}>
       <div className="space-y-4">
         <Breadcrumbs items={breadcrumbItems} />
-        <ProductForm categories={[]} initialData={null} />
+        <ProductForm initialData={null} />
       </div>
     </PageContainer>
   );

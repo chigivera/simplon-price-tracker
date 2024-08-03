@@ -13,8 +13,7 @@ export async function POST(req: Request) {
         url,
         currentPrice,
         lowestPrice,
-        percentDrop,
-        userId
+        percentDrop
       }
     });
     return NextResponse.json(product, { status: 201 });

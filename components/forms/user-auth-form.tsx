@@ -11,35 +11,52 @@ import {
 import { Input } from '@/components/ui/input';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { signIn } from 'next-auth/react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation'; // Import useRouter
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import GoogleSignInButton from '../github-auth-button';
 
+// Update the schema to include password
 const formSchema = z.object({
-  email: z.string().email({ message: 'Enter a valid email address' })
+  email: z.string().email({ message: 'Enter a valid email address' }),
+  password: z
+    .string()
+    .min(6, { message: 'Password must be at least 6 characters long' }) // Password validation
 });
 
 type UserFormValue = z.infer<typeof formSchema>;
 
 export default function UserAuthForm() {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl');
+  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'; // Default to /dashboard
+  const router = useRouter(); // Initialize useRouter
   const [loading, setLoading] = useState(false);
-  const defaultValues = {
-    email: 'demo@gmail.com'
-  };
+
   const form = useForm<UserFormValue>({
     resolver: zodResolver(formSchema),
-    defaultValues
+    defaultValues: {
+      email: 'demo@gmail.com',
+      password: '' // Default value for password
+    }
   });
 
   const onSubmit = async (data: UserFormValue) => {
-    signIn('credentials', {
+    setLoading(true); // Set loading state
+    const result = await signIn('credentials', {
       email: data.email,
+      password: data.password, // Include password in signIn
       callbackUrl: callbackUrl ?? '/dashboard'
     });
+    setLoading(false); // Reset loading state
+
+    if (result?.error) {
+      // Handle error (optional)
+      console.error(result.error);
+    } else {
+      // Redirect to the callback URL or dashboard
+      router.push(callbackUrl);
+    }
   };
 
   return (
@@ -59,6 +76,26 @@ export default function UserAuthForm() {
                   <Input
                     type="email"
                     placeholder="Enter your email..."
+                    disabled={loading}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* New password field */}
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    placeholder="Enter your password..."
                     disabled={loading}
                     {...field}
                   />

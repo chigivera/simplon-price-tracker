@@ -22,7 +22,6 @@ import { Heading } from '@/components/ui/heading';
 // import FileUpload from "@/components/FileUpload";
 import { useToast } from '../ui/use-toast';
 import { AlertModal } from '../modal/alert-modal';
-import { PrismaClient } from '@prisma/client';
 import { scrapeProductDetails } from '@/lib/actions';
 
 const formSchema = z.object({
@@ -48,7 +47,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({ initialData }) => {
   const description = initialData ? 'Edit a product.' : 'Add a new product';
   const toastMessage = initialData ? 'Product updated.' : 'Product created.';
   const action = initialData ? 'Save changes' : 'Create';
-  const prisma = new PrismaClient();
 
   const defaultValues = initialData
     ? initialData
